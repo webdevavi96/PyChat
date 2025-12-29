@@ -11,13 +11,20 @@ function Button({
     className = "",
 }) {
     const variants = {
-        primary: "bg-blue-600 hover:bg-blue-700 text-white",
-        secondary: "bg-blue-300 hover:bg-blue-400 text-white",
-        danger: "bg-red-600 hover:bg-red-700 text-white",
-        success: "bg-green-600 hover:bg-green-700 text-white",
-        warning: "bg-orange-500 hover:bg-orange-600 text-black",
+        primary:
+            "bg-brand hover:bg-brand-soft text-white shadow-lg hover:shadow-brand/40",
+
+        secondary:
+            "bg-accent text-black hover:brightness-110 shadow-md",
+
         outline:
-            "border border-blue-600 text-blue-600 hover:bg-blue-600 hover:text-white",
+            "border border-border text-text-primary hover:bg-white/5",
+
+        danger:
+            "bg-error text-white hover:brightness-110",
+
+        success:
+            "bg-success text-white hover:brightness-110",
     };
 
     const sizes = {
@@ -33,8 +40,8 @@ function Button({
             disabled={disabled || loading}
             className={`
         inline-flex items-center justify-center gap-2
-        rounded-lg font-medium transition-all duration-200
-        focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2
+        rounded-lg font-semibold transition-all duration-200
+        focus:outline-none focus:ring-2 focus:ring-brand/50 focus:ring-offset-2 focus:ring-offset-bg
         ${variants[variant] || variants.primary}
         ${sizes[size] || sizes.md}
         ${disabled || loading ? "opacity-50 cursor-not-allowed" : ""}
@@ -42,7 +49,7 @@ function Button({
       `}
         >
             {loading && (
-                <span className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/70 border-t-transparent" />
             )}
             {title}
         </button>

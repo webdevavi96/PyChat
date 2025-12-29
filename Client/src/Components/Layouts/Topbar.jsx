@@ -1,80 +1,64 @@
-import React from "react";
+import React, { useContext } from "react";
 import { NavLink } from "react-router-dom";
+import { AuthContext } from "../../Contexts/authContext";
+import { Button } from "../Ui/export.js";
 
 function Topbar() {
-    const navItem =
-        "px-3 py-2 rounded-md text-sm font-medium transition hover:bg-white/10";
+
+    const { isAuthenticated } = useContext(AuthContext);
+
+
+    const baseItem =
+        "px-3 py-2 rounded-md text-sm font-medium transition-all duration-200";
+
+    const inactive =
+        "text-text-secondary hover:bg-white/5 hover:text-text-primary";
 
     const active =
-        "bg-white/15 text-white";
+        "bg-surface-elevated text-text-primary";
 
     return (
-        <header className="bg-black border-b border-white/10 px-4 py-3">
+        <header className="bg-bg-soft border-b border-border px-4 py-3">
             <div className="flex items-center justify-between max-w-6xl mx-auto">
+
+                {/* Logo */}
                 <NavLink
                     to="/home"
-                    className="text-lg font-bold tracking-wide text-white"
+                    className="text-lg font-bold tracking-wide text-text-primary"
                 >
-                    LOGO
+                    PyChat
                 </NavLink>
 
+                {/* Nav */}
                 <nav>
-                    <ul className="flex items-center gap-1">
-                        <li>
-                            <NavLink
-                                to="/home"
-                                className={({ isActive }) =>
-                                    `${navItem} ${isActive ? active : "text-gray-300"}`
-                                }
-                            >
-                                Home
-                            </NavLink>
-                        </li>
+                    {isAuthenticated && (<ul className="flex items-center gap-1">
+                        {[
+                            { to: "/home", label: "Home" },
+                            { to: "/chat", label: "Chat" },
+                            { to: "/friends", label: "Friends" },
+                            { to: "/profile", label: "Profile" },
+                            { to: "/settings", label: "Settings" },
+                        ].map((item) => (
+                            <li key={item.to}>
+                                <NavLink
+                                    to={item.to}
+                                    className={({ isActive }) =>
+                                        `${baseItem} ${isActive ? active : inactive}`
+                                    }
+                                >
+                                    {item.label}
+                                </NavLink>
+                            </li>
+                        ))}
+                    </ul>)}
 
-                        <li>
-                            <NavLink
-                                to="/chat"
-                                className={({ isActive }) =>
-                                    `${navItem} ${isActive ? active : "text-gray-300"}`
-                                }
-                            >
-                                Chat
-                            </NavLink>
-                        </li>
+                    {!isAuthenticated && (
+                        <div className="flex gap-4">
+                            <Button variant="primary" title="Sign In" />
+                            <Button variant="outline" title="Sign Up" />
+                        </div>
+                    )}
 
-                        <li>
-                            <NavLink
-                                to="/friends"
-                                className={({ isActive }) =>
-                                    `${navItem} ${isActive ? active : "text-gray-300"}`
-                                }
-                            >
-                                Friends
-                            </NavLink>
-                        </li>
-
-                        <li>
-                            <NavLink
-                                to="/profile"
-                                className={({ isActive }) =>
-                                    `${navItem} ${isActive ? active : "text-gray-300"}`
-                                }
-                            >
-                                Profile
-                            </NavLink>
-                        </li>
-
-                        <li>
-                            <NavLink
-                                to="/settings"
-                                className={({ isActive }) =>
-                                    `${navItem} ${isActive ? active : "text-gray-300"}`
-                                }
-                            >
-                                Settings
-                            </NavLink>
-                        </li>
-                    </ul>
                 </nav>
             </div>
         </header>
