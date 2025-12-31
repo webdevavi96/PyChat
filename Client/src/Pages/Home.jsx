@@ -1,9 +1,13 @@
-import React from 'react'
+import React from 'react';
+import { Updates } from '../Components/Ui/export';
 
 function Home() {
   return (
-    <div>Home</div>
-  )
+    <section className="min-h-screen w-full bg-[var(--color-surface)] p-6">
+      <h1 className="text-text-primary mb-4 text-lg font-semibold">Updates from friends</h1>
+      <Updates />
+    </section>
+  );
 }
 
-export default Home
+export default Home;
