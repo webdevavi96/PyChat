@@ -1,6 +1,6 @@
 import { createBrowserRouter } from 'react-router-dom';
 import Layout from '../../Components/Layouts/Layout';
-import { Loader, Chat } from '../../Components/Ui/export.js';
+import { Loader, Chat, ChatList, ChatPage } from '../../Components/Ui/export.js';
 import {
   Home,
   Profile,
@@ -33,7 +33,11 @@ const router = createBrowserRouter([
       {
         element: <ProtectedRoutes />,
         children: [
-          { path: 'chat', element: <Chat /> },
+          {
+            path: 'chat',
+            element: <Chat />,
+            children: [{ path: ':id', element: <ChatPage /> }],
+          },
           { path: 'friends', element: <Friends /> },
           { path: 'profile', element: <Profile /> },
           { path: 'settings', element: <Settings /> },
