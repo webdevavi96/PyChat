@@ -12,6 +12,6 @@ class Post(Base):
     details = Column(JSONB, nullable=False, default=dict)
 
     # Relationships
-    user_id = Column(
+    author = Column(
         Integer, ForeignKey("users.id", ondelete="SET NULL"), nullable=True
     )

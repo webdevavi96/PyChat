@@ -1,13 +1,7 @@
 from app.core.Base import Base
-from sqlalchemy import Column, Integer, String, Enum, ForeignKey
+from sqlalchemy import Column, Integer, String, ForeignKey
 from sqlalchemy_utils import EmailType
 from sqlalchemy.orm import relationship
-import enum
-
-
-class Gender(enum.Enum):
-    MALE = "Male"
-    FEMALE = "Female"
 
 
 class User(Base):
@@ -19,10 +13,7 @@ class User(Base):
     username = Column(String(100), nullable=False, unique=True)
     phone = Column(String(10), nullable=False, unique=True)
     email = Column(EmailType, unique=True, nullable=False)
-    gender = Column(
-        Enum(Gender, name="genderenum", values_callable=lambda x: [e.value for e in x]),
-        nullable=False,
-    )
+    gender = Column(String, nullable=False)
     password_hash = Column(String, nullable=False)
     avatar = Column(String, nullable=True)
 

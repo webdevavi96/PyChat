@@ -7,7 +7,7 @@ class Messages(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     messages = Column(String, nullable=False)
-    image = Column(String, nullable=True)
+    attachment = Column(String, nullable=True)
 
     # Relationship
     sender = Column(ForeignKey("users.id", ondelete="SET NULL"), nullable=False)
