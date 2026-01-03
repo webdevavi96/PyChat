@@ -22,4 +22,3 @@ class UpdateUser(BaseModel):
 
 class ForgotPassword(BaseModel):
     pass
-
