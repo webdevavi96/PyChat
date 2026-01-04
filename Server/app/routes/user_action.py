@@ -14,6 +14,7 @@ from app.models.Posts import Post
 from app.core.Session import get_db
 from app.caching.config import rd
 import json
+from Server.app.schemas.FollowerSchema import GetSubscribers
 
 
 app = APIRouter()
@@ -42,6 +43,40 @@ def toggle_follow(data: SubscribeChannel, db: Session = Depends(get_db)):
     db.commit()
     db.refresh(_channel)
     return {"status": 200, "message": "Success"}
+
+
+@app.get("/folloowers")
+async def get_followers(
+    data: GetSubscribers, page: int = 1, size: int = 1, db: Session = Depends(get_db)
+):
+
+    offset = (page - 1) * size
+
+    user = db.query(User).filter(User.id == data.channel).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    cached_followers = await rd.get(name=f"followers:{data.channel}")
+    if cached_followers:
+        return {
+            "status": 200,
+            "message": "Success",
+            "data": json.loads(cached_followers),
+        }
+
+    followers = (
+        db.query(Follower)
+        .filter(Follower.channel == data.channel)
+        .offset(offset=offset)
+        .limit(limit=size)
+        .all()
+    )
+
+    if not followers:
+        raise HTTPException(status_code=404, detail="No followers founs")
+
+    await rd.set(name=f"followers:{data.channel}", value=json.dumps(followers))
+    return {"status": 200, "message": "Success", "data": followers, "page": page}
 
 
 @app.post("/create_post")
@@ -88,7 +123,7 @@ async def get_all_posts(
 
     await rd.set(name=f"posts:{page}", value=json.dumps(posts), ex=600)
 
-    return {"status": 200, "message": "Success", "data": posts}
+    return {"status": 200, "message": "Success", "data": posts, "page": page}
 
 
 @app.get("/post")
@@ -116,3 +151,19 @@ async def get_post(user_id: int, post_id: int, db: Session = Depends(get_db)):
     await rd.set(name=post_c_key, value=json.dumps(post))
 
     return {"status": 200, "message": "Success", "data": serialize_post(post)}
+
+
+@app.get("/delete_post")
+def delete_post(data: DeletePost, db: Session = Depends(get_db)):
+
+    existing_post = (
+        db.query(Post).filter(Post.id == data.id, Post.author == data.user_id).first()
+    )
+
+    if not existing_post:
+        return {"status": 404, "message": "Post not found"}
+
+    db.delete(existing_post)
+    db.commit()
+
+    return {"status": 200, "message": "Success"}

@@ -19,3 +19,4 @@ class UpdatePost(BaseModel):
 
 class DeletePost(BaseModel):
     id: int
+    user_id:int

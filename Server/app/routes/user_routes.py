@@ -10,7 +10,7 @@ from app.decorators.cache_decor import rate_limiter
 from app.serializer.user_serializer import serialize_user
 import json
 
-app = APIRouter()
+app = APIRouter(prefix="auth", tags=["Auth"])
 
 
 @app.post("/register")
