@@ -42,3 +42,5 @@ class User(Base):
         cascade="all, delete-orphan",
         passive_deletes=True,
     )
+    admin_of = relationship("Group", backref="users")
+    member_of = relationship("GroupMembers", backref="users")

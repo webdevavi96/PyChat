@@ -10,5 +10,6 @@ class Messages(Base):
     attachment = Column(String, nullable=True)
 
     # Relationship
+    groups = Column(ForeignKey("groups.id"), onupdate="SET NULL", nullable=True)
     sender = Column(ForeignKey("users.id", ondelete="SET NULL"), nullable=False)
     receiver = Column(ForeignKey("users.id", ondelete="SET NULL"), nullable=False)

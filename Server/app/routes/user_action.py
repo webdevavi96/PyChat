@@ -4,9 +4,20 @@ from app.schemas.FollowerSchema import (
     SubscribeChannel,
     GetSubscribers,
 )
-from app.schemas.PostSchema import GetPost, NewPost, UpdatePost, DeletePost
+from app.schemas.PostSchema import NewPost, UpdatePost, DeletePost
+from app.schemas.GroupSchema import (
+    CreateGroup,
+    JoinGroup,
+    LeaveGroup,
+    DeleteGroup,
+    AddMember,
+    RemoveMember,
+)
+from app.models.Groups import Group
+from app.models.GroupMembers import GroupMembers
 from app.serializer.follower_serializer import serialize_follower
 from app.serializer.post_serializer import serialize_post
+from app.serializer.group_serializer import serialize_group
 from app.decorators.cache_decor import rate_limiter
 from app.models.Follower import Follower
 from app.models.UserModels import User
@@ -14,7 +25,6 @@ from app.models.Posts import Post
 from app.core.Session import get_db
 from app.caching.config import rd
 import json
-from Server.app.schemas.FollowerSchema import GetSubscribers
 
 
 app = APIRouter()
@@ -167,3 +177,39 @@ def delete_post(data: DeletePost, db: Session = Depends(get_db)):
     db.commit()
 
     return {"status": 200, "message": "Success"}
+
+
+@app.post("/create_group")
+def create_group(data: CreateGroup, db: Session = Depends(get_db)):
+
+    group = Group(name=data.name, desc=data.desc, admin=data.admin_id)
+
+    if not group:
+        raise HTTPException(status_code=501, detail="Internal server error")
+
+    db.add(group)
+    db.commit()
+    db.refresh(group)
+
+    return {"status": 201, "message": "Success", "data": serialize_group(group)}
+
+
+@app.post("/join_group")
+def join_group(data: JoinGroup, db: Session = Depends(get_db)):
+
+    group = db.query(Group).filter(Group.id == data.id).first()
+
+    if not group:
+        raise HTTPException(status_code=404, detail="Group not found")
+
+    isInstance = group.members == data.member_id
+
+    if isInstance:
+        raise HTTPException(status_code=429, detail="Already joined this group")
+
+    member = GroupMembers(group_id=data.id, user_id=data.member_id)
+
+    if not member:
+        raise HTTPException(status_code=501, detail="Internal server error")
+
+    return {"status": 201, "message": "Success", "data": serialize_group(group)}
