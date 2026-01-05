@@ -104,18 +104,19 @@ def login_user(user: LoginUser, db: Session = Depends(get_db)):
 
 
 @app.post("/profile")
-async def get_profile(email: str, db: Session = Depends(get_db)):
+async def get_profile(user_id: int, db: Session = Depends(get_db)):
 
-    saved_user = await rd.get(name=f"user:{email}")
+    user_key = f"user:{user_id}"
+    saved_user = await rd.get(name=user_key)
 
     if saved_user:
         return {"status": 200, "message": "Success", "data": json.loads(saved_user)}
 
-    user = db.query(User).filter(User.email == email).first()
+    user = db.query(User).filter(User.id == user_id).first()
 
     if not user:
         raise HTTPException(status_code=404, detail="User not found.")
 
-    await rd.set(name=f"user:{email}", value=json.dumps(user), ex=1800)
+    await rd.set(name=user_key, value=json.dumps(user), ex=1800)
 
     return {"status": 200, "message": "Success", "data": serialize_user(user)}

@@ -30,10 +30,18 @@ import json
 app = APIRouter()
 
 
-@app.post("/follow")
+@app.post(
+    "/follow", dependencies=[Depends(rate_limiter(max_requests=2, time_window=10))]
+)
 def toggle_follow(data: SubscribeChannel, db: Session = Depends(get_db)):
 
-    _channel = db.query(Follower).filter(Follower.id == data.id).first()
+    _channel = (
+        db.query(Follower)
+        .filter(
+            Follower.subscriber == data.subscriber, Follower.channel == data.channel
+        )
+        .first()
+    )
 
     if not _channel:
         new_follower = Follower(
@@ -55,7 +63,9 @@ def toggle_follow(data: SubscribeChannel, db: Session = Depends(get_db)):
     return {"status": 200, "message": "Success"}
 
 
-@app.get("/folloowers")
+@app.get(
+    "/folloowers", dependencies=[Depends(rate_limiter(max_requests=2, time_window=10))]
+)
 async def get_followers(
     data: GetSubscribers, page: int = 1, size: int = 1, db: Session = Depends(get_db)
 ):
@@ -89,7 +99,9 @@ async def get_followers(
     return {"status": 200, "message": "Success", "data": followers, "page": page}
 
 
-@app.post("/create_post")
+@app.post(
+    "/create_post", dependencies=[Depends(rate_limiter(max_requests=2, time_window=10))]
+)
 def create_post(data: NewPost, db: Session = Depends(get_db)):
 
     if not db.query(User).filter(User.id == data.author).first:
@@ -107,7 +119,7 @@ def create_post(data: NewPost, db: Session = Depends(get_db)):
     return {"status": 201, "message": "Success"}
 
 
-@app.get("/posts")
+@app.get("/posts", dependencies=[Depends(rate_limiter(max_requests=2, time_window=10))])
 async def get_all_posts(
     user_id: int, page: int = 1, size: int = 10, db: Session = Depends(get_db)
 ):
@@ -163,7 +175,9 @@ async def get_post(user_id: int, post_id: int, db: Session = Depends(get_db)):
     return {"status": 200, "message": "Success", "data": serialize_post(post)}
 
 
-@app.get("/delete_post")
+@app.get(
+    "/delete_post", dependencies=[Depends(rate_limiter(max_requests=2, time_window=5))]
+)
 def delete_post(data: DeletePost, db: Session = Depends(get_db)):
 
     existing_post = (
@@ -179,7 +193,10 @@ def delete_post(data: DeletePost, db: Session = Depends(get_db)):
     return {"status": 200, "message": "Success"}
 
 
-@app.post("/create_group")
+@app.post(
+    "/create_group",
+    dependencies=[Depends(rate_limiter(max_requests=2, time_window=10))],
+)
 def create_group(data: CreateGroup, db: Session = Depends(get_db)):
 
     group = Group(name=data.name, desc=data.desc, admin=data.admin_id)
@@ -194,7 +211,9 @@ def create_group(data: CreateGroup, db: Session = Depends(get_db)):
     return {"status": 201, "message": "Success", "data": serialize_group(group)}
 
 
-@app.post("/join_group")
+@app.post(
+    "/join_group", dependencies=[Depends(rate_limiter(max_requests=2, time_window=10))]
+)
 def join_group(data: JoinGroup, db: Session = Depends(get_db)):
 
     group = db.query(Group).filter(Group.id == data.id).first()
@@ -213,3 +232,186 @@ def join_group(data: JoinGroup, db: Session = Depends(get_db)):
         raise HTTPException(status_code=501, detail="Internal server error")
 
     return {"status": 201, "message": "Success", "data": serialize_group(group)}
+
+
+@app.post(
+    "/add_memeber", dependencies=[Depends(rate_limiter(max_requests=2, time_window=10))]
+)
+def add_member(data: AddMember, db: Session = Depends(get_db)):
+
+    existing = db.query(User).filter(User.member_of == data.id).first()
+
+    if existing:
+        raise HTTPException(status_code=409, detail="User already in this group")
+
+    admin = db.query(User).filter(User.id == data.admin_id).first()
+
+    if not admin:
+        raise HTTPException(status_code=409, detail="You are not a admin of this group")
+
+    user = db.query(User).filter(User.id == data.member_id).first()
+
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    new_member = GroupMembers(group_id=data.id, user_id=data.member_id)
+
+    db.add(new_member)
+    db.commit()
+    db.refresh(new_member)
+
+    return {"status": 201, "message": "Success"}
+
+
+@app.post(
+    "/leave_group", dependencies=[Depends(rate_limiter(max_requests=2, time_window=10))]
+)
+def leave_group(data: LeaveGroup, db: Session = Depends(get_db)):
+
+    user = db.query(User).filter(User.id == data.member_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    group = db.query(Group).filter(Group.id == data.id).first()
+
+    if not group:
+        raise HTTPException(status_code=404, detail="Group not found")
+
+    is_member = group.members == user.id
+    if not is_member:
+        raise HTTPException(status_code=409, detail="You are not part of this group")
+
+    db.delete(is_member)
+    db.commit()
+
+    return {"status": 200, "message": "Success"}
+
+
+@app.post(
+    "/remove_member",
+    dependencies=[Depends(rate_limiter(max_requests=3, time_window=10))],
+)
+def remove_member(data: RemoveMember, db: Session = Depends(get_db)):
+
+    group = db.query(Group).filter(Group.id == data.id).first()
+
+    if not group:
+        raise HTTPException(status_code=404, detail="Group not found")
+
+    is_admin = group.admin == data.admin_id
+
+    if not is_admin:
+        raise HTTPException(
+            status_code=409, detail="You are not allowed to perform this action"
+        )
+
+    is_member = group.members == data.member_id
+    if not is_member:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    db.delete(is_member)
+    db.commit()
+
+    return {"status": 200, "message": "Success"}
+
+
+@app.post(
+    "/delete_group",
+    dependencies=[Depends(rate_limiter(max_requests=2, time_window=10))],
+)
+def delete_group(data: DeleteGroup, db: Session = Depends(get_db)):
+
+    group = db.query(Group).filter(Group.id == data.id).first()
+
+    if not group:
+        raise HTTPException(status_code=404, detail="Group not found")
+
+    is_admin = group.admin == data.admin_id
+
+    if not is_admin:
+        raise HTTPException(
+            status_code=404, detail="You are not allowed to perfrom this task"
+        )
+
+    db.delete(group)
+    db.commit()
+
+    return {"status": 200, "message": "Success"}
+
+
+@app.get(
+    "get_groups", dependencies=[Depends(rate_limiter(max_requests=2, time_window=10))]
+)
+async def get_groups(
+    user_id: int, page: int = 1, size: int = 10, db: Session = Depends(get_db)
+):
+
+    offset = (page - 1) * size
+
+    if not user_id:
+        raise HTTPException(status_code=401, detail="Invalid user id")
+
+    group_key = f"groups:{user_id}"
+    _groups = await rd.get(name=group_key)
+
+    if _groups:
+        return {"status": 200, "message": "Success", "data": json.loads(_groups)}
+
+    groups = (
+        db.query(Group)
+        .filter(Group.members == user_id)
+        .offset(offset=offset)
+        .limit(size)
+        .all()
+    )
+
+    if not groups:
+        raise HTTPException(status_code=404, detail="You are not the part of any group")
+
+    await rd.set(name=group_key, value=json.dumps(groups), ex=600)
+
+    return {"status": 200, "message": "Success", "data": groups}
+
+
+@app.get(
+    "/groups", dependencies=[Depends(rate_limiter(max_requests=3, time_window=15))]
+)
+async def get_group(user_id: int, group_id: int, db: Session = Depends(get_db)):
+
+    if not user_id or not group_id:
+        raise HTTPException(status_code=401, detail="User id or Group id is invalid")
+
+    user_key = f"user:{user_id}"
+    group_key = f"group:{group_id}"
+
+    _user = await json.loads(await rd.get(name=user_key))
+    _group = await json.loads(await rd.get(name=group_key))
+
+    if _user and _group:
+        is_member = _group.memmbers == _user.id
+
+        if not is_member:
+            raise HTTPException(
+                status_code=404, detail="You are not a member of this group"
+            )
+
+        return {"status": 200, "message": "Success", "data": serialize_group(_group)}
+
+    user = db.query(User).filter(User.id == user_id).first()
+
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    group = (
+        db.query(Group).filter(Group.id == group_id, Group.members == user.id).first()
+    )
+
+    if not group:
+        raise HTTPException(
+            status_code=404, detail="You are not a member of this group"
+        )
+
+    await rd.set(name=user_key, value=json.dumps(user))
+    await rd.set(name=group_key, value=json.dumps(group))
+
+    return {"status": 200, "message": "Success", "data": serialize_group(group)}

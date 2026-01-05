@@ -30,4 +30,5 @@ class AddMember(BaseModel):
 
 class RemoveMember(BaseModel):
     id: int
+    admin_id:int
     member_id: int
