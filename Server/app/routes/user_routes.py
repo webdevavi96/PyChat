@@ -1,7 +1,9 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException,status
 from sqlalchemy.orm import Session
 from app.core.Session import get_db
-from app.schemas.UserSchema import RegisterUser, LoginUser
+from app.schemas.UserSchema import RegisterUser, LoginUser,TokenResponse
+from app.core.Security import hash_password, create_access_token, verify_password
+
 from app.models.UserModels import User
 from app.core.otp_generator import generate_otp
 from app.caching.config import rd
@@ -28,7 +30,7 @@ async def register_user(user: RegisterUser, db: Session = Depends(get_db)):
         email=user.email,
         gender=user.gender,
         avatar=user.avatar,
-        password=user.password,
+        password=hash_password(user.password),
     )
 
     await rd.set(name=f"temp_user:{user.email}", value=json.dumps(temp_user), ex=600)
@@ -72,34 +74,20 @@ async def verify_otp(email: str, otp: str, db: Session = Depends(get_db)):
     return {"status": 201, "message": "Registraion successfull"}
 
 
-# Helper function for Login method
-def verify_password(password, db_password):
-    password_hash = password
-    db_hash_pass = db_password
+@app.post("/login", response_model=TokenResponse)
+def login_user(payload: LoginUser, db: Session = Depends(get_db)):
+    user = db.query(User).filter(User.email == payload.email).first()
+    if not user or not verify_password(payload.password, user.password):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid credentials",
+        )
 
-    if password_hash == db_hash_pass:
-        return True
-
-    return False
-
-
-@app.post("login")
-def login_user(user: LoginUser, db: Session = Depends(get_db)):
-    _user = db.query(User).filter(User.email == user.email).first()
-
-    if not _user:
-        raise HTTPException(status_code=404, detail="User not found")
-
-    isAuthenticated = verify_password(user.password, _user.password_hash)
-
-    if not isAuthenticated:
-        raise HTTPException(status_code=401, detail="Invalid credentials")
+    token = create_access_token({"sub": str(user.id)})
 
     return {
-        "status": 200,
-        "message": "Success",
-        "data": serialize_user(_user),
-        "isAuthenticated": isAuthenticated,
+        "access_token": token,
+        "token_type": "bearer",
     }
 
 

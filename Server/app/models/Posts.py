@@ -7,7 +7,7 @@ from sqlalchemy.dialects.postgresql import JSONB
 class Post(Base):
     __tablename__ = "posts"
 
-    id = Column(Integer, primary_key=True, unique=True, index=True)
+    id = Column(Integer, primary_key=True, index=True)
     title = Column(String, nullable=False)
     details = Column(JSONB, nullable=False, default=dict)
 
