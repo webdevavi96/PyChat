@@ -9,7 +9,7 @@ class Group(Base):
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String(50), nullable=False)
     desc = Column(String(100), nullable=True)
-    admin = Column(Integer, ForeignKey("users.id", ondelete="CASECADE"))
+    admin = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"))
     members = relationship("GroupMembers", backref="groups")
     messages = relationship("Messages", backref="groups")
     created_at = Column(DateTime, server_default=func.now())

@@ -27,7 +27,7 @@ from app.caching.config import rd
 import json
 
 
-app = APIRouter()
+app = APIRouter(prefix="/actions", tags=["Action"])
 
 
 @app.post(

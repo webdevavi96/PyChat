@@ -4,6 +4,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.caching.config import rd
 from app.routes.user_routes import app as user_router
 from app.routes.user_action import app as actions
+from app.websockets.chat_socket import chat as chat_router
 
 
 @asynccontextmanager
@@ -13,7 +14,7 @@ async def lifespan(app: FastAPI):
     await rd.close()
 
 
-origins = ["http://localhost5173", "http://127.0.0.1:5173"]
+origins = ["http://localhost5173", "http://127.0.0.1:5173", "*"]
 
 
 app = FastAPI(lifespan=lifespan)
@@ -29,6 +30,7 @@ app.add_middleware(
 
 app.include_router(user_router)
 app.include_router(actions)
+app.include_router(chat_router)
 
 
 @app.get("/")
