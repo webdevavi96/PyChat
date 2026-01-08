@@ -12,6 +12,6 @@ class Post(Base):
     details = Column(JSONB, nullable=False, default=dict)
 
     # Relationships
-    author = Column(
-        Integer, ForeignKey("users.id", ondelete="SET NULL"), nullable=True
-    )
+    author = Column(Integer, ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
+
+    author_user = relationship("User", back_populates="posts", passive_deletes=True)

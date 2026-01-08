@@ -17,8 +17,8 @@ app = APIRouter(prefix="/auth", tags=["Auth"])
 
 @app.post("/register")
 async def register_user(user: RegisterUser, db: Session = Depends(get_db)):
-
-    if db.query(User).filter(User.email == user.email).first():
+    _user = db.query(User).filter(User.email == user.email).first()
+    if not _user:
         raise HTTPException(status_code=400, detail="Email already exists.")
 
     otp = generate_otp()
@@ -29,7 +29,6 @@ async def register_user(user: RegisterUser, db: Session = Depends(get_db)):
         phone=user.phone,
         email=user.email,
         gender=user.gender,
-        avatar=user.avatar,
         password=hash_password(user.password),
     )
 

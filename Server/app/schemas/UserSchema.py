@@ -8,7 +8,6 @@ class RegisterUser(BaseModel):
     email: EmailStr
     gender: str
     password: str
-    avatar: str
 
 
 class LoginUser(BaseModel):

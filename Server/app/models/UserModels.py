@@ -16,32 +16,37 @@ class User(Base):
     gender = Column(String(10), nullable=False)
     password_hash = Column(String, nullable=False)
     avatar = Column(String, nullable=True)
-    
 
     # Relationships
-    posts = relationship(
-        "Post",
-        back_populates="users",
+    posts = relationship("Post", back_populates="author_user", passive_deletes=True)
+
+    sent_messages = relationship(
+        "Messages",
+        foreign_keys="Messages.sender",
+        backref="sender_user",
         cascade="all, delete-orphan",
         passive_deletes=True,
     )
-    messages = relationship(
+    received_messages = relationship(
         "Messages",
-        back_populates="users",
+        foreign_keys="Messages.receiver",
+        backref="receiver_user",
+        cascade="all, delete-orphan",
+        passive_deletes=True,
+    )
+    subscribed_to = relationship(
+        "Follower",
+        foreign_keys="Follower.subscriber",
+        backref="subscriber_user",
         cascade="all, delete-orphan",
         passive_deletes=True,
     )
     subscribers = relationship(
         "Follower",
-        back_populates="users",
+        foreign_keys="Follower.channel",
+        backref="channel_user",
         cascade="all, delete-orphan",
         passive_deletes=True,
     )
-    channels = relationship(
-        "Follower",
-        back_populates="users",
-        cascade="all, delete-orphan",
-        passive_deletes=True,
-    )
-    admin_of = relationship("Group", backref="users")
-    member_of = relationship("GroupMembers", backref="users")
+    admin_of = relationship("Group", backref="admin_user", cascade="all, delete-orphan")
+    member_of = relationship("GroupMembers", backref="user", cascade="all, delete-orphan")

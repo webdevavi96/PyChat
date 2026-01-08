@@ -1,5 +1,5 @@
 import React, { useContext } from 'react';
-import { NavLink } from 'react-router-dom';
+import { NavLink, useNavigate } from 'react-router-dom';
 import { AuthContext } from '../../Contexts/authContext';
 import { Button } from '../Ui/export.js';
 
@@ -11,6 +11,17 @@ function Topbar() {
   const inactive = 'text-text-secondary hover:bg-white/5 hover:text-text-primary';
 
   const active = 'bg-surface-elevated text-text-primary';
+
+
+  const navigate = useNavigate()
+
+  const handleSignIn = () => {
+    navigate("/login")
+  };
+
+  const handelSignUp = () => {
+    navigate("/register")
+  };
 
   return (
     <header className="bg-bg-soft border-border border-b px-4 py-3">
@@ -45,8 +56,8 @@ function Topbar() {
 
           {!isAuthenticated && (
             <div className="flex gap-4">
-              <Button variant="primary" title="Sign In" />
-              <Button variant="outline" title="Sign Up" />
+              <Button variant="primary" title="Sign In" onClick={handleSignIn} />
+              <Button variant="outline" title="Sign Up" onClick={handelSignUp} />
             </div>
           )}
         </nav>

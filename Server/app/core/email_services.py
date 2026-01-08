@@ -1,7 +1,36 @@
-async def send_otp(email: str, otp: int):
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
+import smtplib
+import os
+
+
+SMTP_HOST = os.getenv("SMTP_HOST")
+SMTP_PORT = int(os.getenv("SMTP_PORT"))
+SMTP_USERNAME = os.getenv("SMTP_USERNAME")
+SMTP_PASSWORD = os.getenv("SMTP_PASSWORD")
+EMAIL_FROM = os.getenv("EMAIL_FROM")
+
+
+async def send_otp(email: str, otp: int) -> bool:
     if not email or not otp:
-        return
+        return False
+    try:
+        msg = MIMEMultipart()
+        msg["From"] = EMAIL_FROM
+        msg["To"] = email
+        msg["Subject"] = "Your One Time Password"
+        body = f"Thank you for registraion. Your One Time Password is: {otp}"
 
-    # Email sending logic here..
+        msg.attach(MIMEText(body, "html"))
 
-    return
+        with smtplib.SMTP(SMTP_HOST, SMTP_PORT) as server:
+            server.starttls()
+            server.login(SMTP_USERNAME, SMTP_PASSWORD)
+            server.send_message(msg=msg)
+
+            return True
+
+    except Exception as e:
+        raise ValueError("Something went wrong")
+    
+    return False

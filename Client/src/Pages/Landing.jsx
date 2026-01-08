@@ -1,7 +1,19 @@
 import React from 'react';
 import { Button, Card } from '../Components/Ui/export.js';
+import { useNavigate } from 'react-router-dom';
 
 function Landing() {
+
+  const navigate = useNavigate()
+
+  const handleSignIn = ()=>{
+    navigate("/login")
+  };
+
+  const handelSignUp = ()=>{
+    navigate("/register")
+  };
+
   return (
     <div className="bg-bg text-text-primary flex min-h-screen w-full flex-col justify-between">
       <section className="mb-4 flex flex-col items-center px-6 pt-24 text-center">
@@ -14,8 +26,8 @@ function Landing() {
         </p>
 
         <div className="flex gap-4">
-          <Button variant="primary" title="Sign In" />
-          <Button variant="outline" title="Sign Up" />
+          <Button variant="primary" title="Sign In" onClick={handleSignIn} />
+          <Button variant="outline" title="Sign Up" onClick={handelSignUp}/>
         </div>
       </section>
 

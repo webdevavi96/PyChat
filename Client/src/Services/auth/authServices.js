@@ -1,23 +1,29 @@
-import axios from axios;
+import axios from "axios";
 
-const SERVER_URL = "localhost://128.0.0.8000/"
+const SERVER_URL = 'http://127.0.0.1:8000/auth/';
 
-const register = async(data)=>{
-    try{
-        const res = await axios.post(`${SERVER_URL}/auth/register`,
-            {params: {data}}
-        );
-        return res;
-    }
-    catch (error){
-        return error;
-    };
+
+export const register = async (data) => {
+  try {
+    const res = await axios.post(
+      `${SERVER_URL}register`,
+      data,
+      {
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      }
+    );
+
+    return res.data;
+  } catch (error) {
+    throw error.response?.data || error;
+  }
 };
 
-
-const login = async(data)=>{
+export const login = async(data)=>{
     try {
-        const res = await axios.post(`${SERVER_URL}/auth/login`,
+        const res = await axios.post(`${SERVER_URL}login`,
             {params: {data}}
         );
         return res;
@@ -28,9 +34,9 @@ const login = async(data)=>{
 
 
 
-const getProfile = async (userId)=>{
+export const getProfile = async (userId)=>{
     try {
-        const res = await axios.get(`${SERVER_URL}/auth/profile`, 
+        const res = await axios.get(`${SERVER_URL}profile`, 
             {params: {"userId": userId}}
         );
         return res;
