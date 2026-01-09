@@ -9,6 +9,8 @@ import PrivacyPolicy from './PrivacyPolicy';
 import TermsOfService from './TermsOfSerivces';
 import CookiePolicy from './CookiePolicy';
 import Security from './Security';
+import OTPVerification from './OTPVerification.jsx';
+
 
 export {
   Home,
@@ -22,4 +24,5 @@ export {
   TermsOfService,
   CookiePolicy,
   Security,
+  OTPVerification,
 };

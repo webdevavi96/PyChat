@@ -13,6 +13,7 @@ import {
   TermsOfService,
   CookiePolicy,
   Security,
+  OTPVerification
 } from '../../Pages/pagesExport.js';
 import { Suspense } from 'react';
 import ProtectedRoutes from './ProtectedRoutes.jsx';
@@ -29,10 +30,11 @@ const router = createBrowserRouter([
       { index: true, element: <Landing /> },
       { path: 'login', element: <Login /> },
       { path: 'register', element: <Register /> },
-      { path: 'home', element: <Home /> },
+      { path: 'verify_otp', element: <OTPVerification /> },
       {
         element: <ProtectedRoutes />,
         children: [
+          { path: 'home', element: <Home /> },
           {
             path: 'chat',
             element: <Chat />,

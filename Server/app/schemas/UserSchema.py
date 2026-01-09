@@ -26,3 +26,12 @@ class UpdateUser(BaseModel):
 
 class ForgotPassword(BaseModel):
     pass
+
+
+class VerifyOTPRequest(BaseModel):
+    email: EmailStr
+    otp: str
+
+
+class ResendOTP(BaseModel):
+    email: EmailStr

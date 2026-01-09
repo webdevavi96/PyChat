@@ -2,6 +2,7 @@ from app.core.Base import Base
 from sqlalchemy import Column, Integer, String, ForeignKey
 from sqlalchemy_utils import EmailType
 from sqlalchemy.orm import relationship
+from .Messages import Messages
 
 
 class User(Base):
@@ -18,35 +19,34 @@ class User(Base):
     avatar = Column(String, nullable=True)
 
     # Relationships
-    posts = relationship("Post", back_populates="author_user", passive_deletes=True)
-
     sent_messages = relationship(
-        "Messages",
-        foreign_keys="Messages.sender",
-        backref="sender_user",
-        cascade="all, delete-orphan",
-        passive_deletes=True,
+        "Messages", foreign_keys=lambda: [Messages.sender_id], back_populates="sender"
     )
+
     received_messages = relationship(
         "Messages",
-        foreign_keys="Messages.receiver",
-        backref="receiver_user",
-        cascade="all, delete-orphan",
-        passive_deletes=True,
+        foreign_keys=lambda: [Messages.receiver_id],
+        back_populates="receiver",
     )
+
     subscribed_to = relationship(
         "Follower",
-        foreign_keys="Follower.subscriber",
-        backref="subscriber_user",
+        foreign_keys="Follower.subscriber_id",
+        back_populates="subscriber",
         cascade="all, delete-orphan",
-        passive_deletes=True,
     )
+
     subscribers = relationship(
         "Follower",
-        foreign_keys="Follower.channel",
-        backref="channel_user",
+        foreign_keys="Follower.channel_id",
+        back_populates="channel",
         cascade="all, delete-orphan",
-        passive_deletes=True,
     )
-    admin_of = relationship("Group", backref="admin_user", cascade="all, delete-orphan")
-    member_of = relationship("GroupMembers", backref="user", cascade="all, delete-orphan")
+    admin_of = relationship(
+        "Group", back_populates="admin", cascade="all, delete-orphan"
+    )
+
+    member_of = relationship(
+        "GroupMembers", back_populates="user", cascade="all, delete-orphan"
+    )
+    posts = relationship("Post", back_populates="author", passive_deletes=True)

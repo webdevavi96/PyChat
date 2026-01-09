@@ -1,7 +1,13 @@
-from fastapi import APIRouter, Depends, HTTPException,status
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from app.core.Session import get_db
-from app.schemas.UserSchema import RegisterUser, LoginUser,TokenResponse
+from app.schemas.UserSchema import (
+    RegisterUser,
+    LoginUser,
+    TokenResponse,
+    VerifyOTPRequest,
+    ResendOTP,
+)
 from app.core.Security import hash_password, create_access_token, verify_password
 
 from app.models.UserModels import User
@@ -12,30 +18,34 @@ from app.decorators.cache_decor import rate_limiter
 from app.serializer.user_serializer import serialize_user
 import json
 
+
 app = APIRouter(prefix="/auth", tags=["Auth"])
 
 
 @app.post("/register")
 async def register_user(user: RegisterUser, db: Session = Depends(get_db)):
     _user = db.query(User).filter(User.email == user.email).first()
-    if not _user:
+    if _user:
         raise HTTPException(status_code=400, detail="Email already exists.")
 
     otp = generate_otp()
+    user_email = user.email.strip().lower()
+    temp_user_data = {
+        "first_name": user.first_name,
+        "last_name": user.last_name,
+        "phone": user.phone,
+        "email": user_email,
+        "gender": user.gender,
+        "password_hash": hash_password(user.password),
+    }
 
-    temp_user = User(
-        first_name=user.first_name,
-        last_name=user.last_name,
-        phone=user.phone,
-        email=user.email,
-        gender=user.gender,
-        password=hash_password(user.password),
+    await rd.set(
+        name=f"temp_user:{user_email}", value=json.dumps(temp_user_data), ex=600
     )
 
-    await rd.set(name=f"temp_user:{user.email}", value=json.dumps(temp_user), ex=600)
-    await rd.set(name=f"otp:{user.email}", value=otp, ex=600)
+    await rd.set(name=f"otp:{user_email}", value=otp, ex=600)
 
-    is_sent = await send_otp(user.email, otp)
+    is_sent = await send_otp(user_email, otp)
 
     if not is_sent:
         raise HTTPException(
@@ -45,32 +55,63 @@ async def register_user(user: RegisterUser, db: Session = Depends(get_db)):
     return {"status": 200, "message": "OTP sent successfully"}
 
 
-@app.post("/verify_otp")
-async def verify_otp(email: str, otp: str, db: Session = Depends(get_db)):
-    if not email or not otp:
-        raise HTTPException(status_code=401, detail="All fields are required")
+# Helper function for otp verification
+def normalize_redis_value(value):
+    if value is None:
+        return None
+    if isinstance(value, bytes):
+        return value.decode()
+    return value
 
-    saved_otp = await rd.get(f"otp:{email}")
-    saved_user = await rd.get(f"temp_user:{email}")
+
+@app.post("/verify_otp")
+async def verify_otp(payload: VerifyOTPRequest, db: Session = Depends(get_db)):
+    saved_otp = await rd.get(f"otp:{payload.email}")
+    saved_user = await rd.get(f"temp_user:{payload.email}")
 
     if not saved_otp or not saved_user:
         raise HTTPException(status_code=400, detail="OTP expired or invalid")
 
-    if saved_otp != otp:
+    saved_otp = normalize_redis_value(saved_otp)
+    saved_user = normalize_redis_value(saved_user)
+
+    if not saved_otp or not saved_user:
+        raise HTTPException(status_code=400, detail="OTP expired or invalid")
+
+    if saved_otp != payload.otp:
         raise HTTPException(status_code=400, detail="Invalid OTP")
 
     user_data = json.loads(saved_user)
-
     new_user = User(**user_data)
 
     db.add(new_user)
     db.commit()
     db.refresh(new_user)
 
-    await rd.delete(f"temp_user:{email}")
-    await rd.delete(f"otp:{email}")
+    await rd.delete(f"temp_user:{payload.email}")
+    await rd.delete(f"otp:{payload.email}")
 
-    return {"status": 201, "message": "Registraion successfull"}
+    return {"status": 201, "message": "Registration successful"}
+
+
+@app.post("/resend_otp")
+async def resend(payload: ResendOTP, db: Session = Depends(get_db)):
+    saved_user = await rd.get(f"temp_user:{payload.email}")
+
+    if not saved_user:
+        raise HTTPException(status_code=404, detail="Please register first")
+    otp = generate_otp()
+    if not otp:
+        raise HTTPException(status_code=501, detail="Internal servr error")
+
+    _is_sent = send_otp(payload.email, otp)
+
+    if not _is_sent:
+        raise HTTPException(status_code=501, detail="Internal server error")
+
+    await rd.set(name=f"otp:{payload.email}", value=otp, ex=600)
+    
+    return {"stauts": 200, "message": "OTP sent successfully"}
 
 
 @app.post("/login", response_model=TokenResponse)

@@ -1,8 +1,12 @@
-import React from 'react';
-import { NavLink } from 'react-router-dom';
+import React, { useState } from 'react';
+import { NavLink, useNavigate } from 'react-router-dom';
 import { register } from "../Services/auth/authServices"
+import { AiFillEye, AiFillEyeInvisible } from "react-icons/ai";
+
 
 function Register() {
+  const [showPass, setShowPass] = useState(false);
+  const navigate = useNavigate();
 
   const handleForm = async (e) => {
     e.preventDefault();
@@ -25,9 +29,13 @@ function Register() {
 
     try {
       const res = await register(data);
-      console.log(res);
+      if (res.status == 200) {
+        sessionStorage.setItem("pending_email", data.email);
+        navigate("/verify_otp")
+      }
+      else alert("Something went wrong! Please try again later.")
     } catch (err) {
-      console.error(err);
+      alert("Something went wrong! Please try again later.")
     }
   };
 
@@ -98,25 +106,55 @@ function Register() {
           </div>
 
 
-          <div>
-            <label className="text-text-secondary mb-1 block text-sm">Password</label>
-            <input
-              name='password'
-              type="password"
-              placeholder="••••••••"
-              className="border-border bg-bg-soft text-text-primary placeholder:text-text-muted focus:ring-brand/40 w-full rounded-lg border px-4 py-2 focus:ring-2 focus:outline-none"
-            />
+          <div className="space-y-4">
+            <div>
+              <label className="text-text-secondary mb-1 block text-sm">
+                Password
+              </label>
+
+              <div className="relative">
+                <input
+                  name="password"
+                  type={showPass ? "text" : "password"}
+                  placeholder="••••••••"
+                  className="border-border bg-bg-soft text-text-primary placeholder:text-text-muted focus:ring-brand/40 w-full rounded-lg border px-4 py-2 pr-10 focus:ring-2 focus:outline-none"
+                />
+
+                <button
+                  type="button"
+                  onClick={() => setShowPass(!showPass)}
+                  className="text-text-muted hover:text-text-primary absolute right-3 top-1/2 -translate-y-1/2"
+                >
+                  <AiFillEye />
+                </button>
+              </div>
+            </div>
+
+            {/* Confirm Password */}
+            <div>
+              <label className="text-text-secondary mb-1 block text-sm">
+                Confirm Password
+              </label>
+
+              <div className="relative">
+                <input
+                  name="confirm_password"
+                  type={showPass ? "text" : "password"}
+                  placeholder="••••••••"
+                  className="border-border bg-bg-soft text-text-primary placeholder:text-text-muted focus:ring-brand/40 w-full rounded-lg border px-4 py-2 pr-10 focus:ring-2 focus:outline-none"
+                />
+
+                <button
+                  type="button"
+                  onClick={() => setShowPass(!showPass)}
+                  className="text-text-muted hover:text-text-primary absolute right-3 top-1/2 -translate-y-1/2"
+                >
+                  <AiFillEye />
+                </button>
+              </div>
+            </div>
           </div>
 
-          <div>
-            <label className="text-text-secondary mb-1 block text-sm">Confirm password</label>
-            <input
-              name='confirm_password'
-              type="password"
-              placeholder="••••••••"
-              className="border-border bg-bg-soft text-text-primary placeholder:text-text-muted focus:ring-brand/40 w-full rounded-lg border px-4 py-2 focus:ring-2 focus:outline-none"
-            />
-          </div>
 
           <label className="text-text-secondary flex items-start gap-2 text-sm">
             <input

@@ -1,5 +1,5 @@
 import React, { useContext } from 'react';
-import { NavLink } from 'react-router-dom';
+import { NavLink, useNavigate } from 'react-router-dom';
 import { Button } from '../Ui/export.js';
 import { AuthContext } from '../../Contexts/authContext';
 
@@ -11,6 +11,19 @@ function Sidebar() {
   const inactive = 'text-text-secondary hover:bg-white/5 hover:text-text-primary';
 
   const active = 'bg-surface-elevated text-text-primary font-semibold shadow-md';
+
+
+  const navigate = useNavigate()
+
+  const handleSignIn = () => {
+    navigate("/login")
+  };
+
+  const handelSignUp = () => {
+    navigate("/register")
+  };
+
+
 
   return (
     <aside className="bg-bg-soft border-border h-full w-60 border-r px-4 py-6">
@@ -44,8 +57,8 @@ function Sidebar() {
 
       {!isAuthenticated && (
         <div className="flex flex-col gap-4">
-          <Button variant="primary" title="Sign In" />
-          <Button variant="outline" title="Sign Up" />
+          <Button variant="primary" title="Sign In" onClick={handleSignIn} />
+          <Button variant="outline" title="Sign Up" onClick={handelSignUp} />
         </div>
       )}
     </aside>

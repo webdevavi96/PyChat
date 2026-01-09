@@ -31,6 +31,4 @@ async def send_otp(email: str, otp: int) -> bool:
             return True
 
     except Exception as e:
-        raise ValueError("Something went wrong")
-    
-    return False
+        return False
